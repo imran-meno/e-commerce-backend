@@ -7,6 +7,7 @@ const multer = require("multer");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const cloudinary = require("./config/cloudinary");
 
+// Models
 const e_commerce_users = require("./models/user");
 const product_schema = require("./models/product");
 const cart = require("./models/cart");
@@ -16,14 +17,13 @@ const app = express();
 // ------------------------------
 // CORS
 // ------------------------------
-// app.use(
-//   cors({
-//     origin: "https://e-commerce-frontend-taupe-nine.vercel.app", // Put your frontend URL in Render env
-//     methods: ["GET", "POST", "PUT", "DELETE"],
-//     credentials: true,
-//   })
-// );
-app.use(cors({ origin: "*", credentials: true }));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
 
 app.use(express.json());
 
@@ -131,7 +131,9 @@ const upload = multer({ storage });
 app.post("/admin", upload.single("pro_image"), async (req, res) => {
   try {
     const { pro_name, pro_price } = req.body;
-    const imageUrl = req.file.path; // Cloudinary URL
+    if (!req.file) return res.status(400).send({ message: "Image required" });
+
+    const imageUrl = req.file.path;
 
     const product = await product_schema.create({
       product_name: pro_name,
@@ -155,6 +157,21 @@ app.get("/products", async (req, res) => {
     res.status(500).send({ message: err.message });
   }
 });
+
+// GET SINGLE PRODUCT
+app.get("/products/:id", async (req, res) => {
+  try {
+    const findProduct = await product_schema.findById(req.params.id);
+    if (!findProduct) return res.status(404).send({ message: "Product not found" });
+    res.send(findProduct);
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+});
+
+// ------------------------------
+// CART ROUTES
+// ------------------------------
 
 // ADD TO CART
 app.post("/cart", async (req, res) => {
@@ -181,17 +198,6 @@ app.get("/viewcart", async (req, res) => {
     const userId = req.query.userId;
     const cartItems = await cart.find({ user_id: userId }).populate("product_id");
     res.send(cartItems);
-  } catch (err) {
-    res.status(500).send({ message: err.message });
-  }
-});
-
-// GET SINGLE PRODUCT
-app.get("/products/:id", async (req, res) => {
-  try {
-    const findProduct = await product_schema.findById(req.params.id);
-    if (!findProduct) return res.status(404).send({ message: "Product not found" });
-    res.send(findProduct);
   } catch (err) {
     res.status(500).send({ message: err.message });
   }
