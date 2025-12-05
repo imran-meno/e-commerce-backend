@@ -1,5 +1,5 @@
 // index.js
-require("dotenv").config({path:'.env'});
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -14,11 +14,11 @@ const cart = require("./models/cart");
 const app = express();
 
 // ------------------------------
-// CORS FOR DEPLOYED FRONTEND
+// CORS
 // ------------------------------
 app.use(
   cors({
-    origin: "https://mern-ecommerce-69hz.vercel.app",
+    origin: process.env.FRONTEND_URL || "*", // Put your frontend URL in Render env
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
@@ -29,30 +29,30 @@ app.use(express.json());
 // ------------------------------
 // MongoDB Atlas connection
 // ------------------------------
-
 mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log("MongoDB Connected via Atlas");
-    process.exit(0);
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
   })
-  .catch((err) => {
-    console.error("MongoDB Connection Error:", err);
-    process.exit(1);
-  });
+  .then(() => console.log("MongoDB Connected via Atlas"))
+  .catch((err) => console.error("MongoDB Connection Error:", err));
+
+// ------------------------------
+// Test Route
+// ------------------------------
+app.get("/", (req, res) => {
+  res.send("<h1>Backend is working!</h1>");
+});
 
 // ------------------------------
 // USER ROUTES
 // ------------------------------
-app.get("/", (req, res) => {
-  res.send(`<h1>What the fuck!!</h1>`);
-});
+
 // SIGNUP
 app.post("/signup", async (req, res) => {
   try {
     const { name, email, password } = req.body;
     const exists = await e_commerce_users.findOne({ email });
-
     if (exists) return res.status(400).send("User already exists");
 
     const user = await e_commerce_users.create({ name, email, password });
@@ -69,8 +69,7 @@ app.post("/login", async (req, res) => {
 
     const user = await e_commerce_users.findOne({ email });
     if (!user) return res.status(404).send("User not found");
-    if (user.password !== password)
-      return res.status(400).send("Incorrect password");
+    if (user.password !== password) return res.status(400).send("Incorrect password");
 
     res.send({
       message: "User logged in",
@@ -90,7 +89,6 @@ app.get("/profile/:email", async (req, res) => {
   try {
     const { email } = req.params;
     const user = await e_commerce_users.findOne({ email });
-
     if (!user) return res.status(404).send("User not found");
     res.send(user);
   } catch (err) {
@@ -132,7 +130,6 @@ const upload = multer({ storage });
 app.post("/admin", upload.single("pro_image"), async (req, res) => {
   try {
     const { pro_name, pro_price } = req.body;
-
     const imageUrl = req.file.path; // Cloudinary URL
 
     const product = await product_schema.create({
@@ -162,10 +159,8 @@ app.get("/products", async (req, res) => {
 app.post("/cart", async (req, res) => {
   try {
     const { user_id, product_id } = req.body;
-
-    if (!user_id || !product_id) {
+    if (!user_id || !product_id)
       return res.status(400).send({ message: "Missing user_id or product_id" });
-    }
 
     const newItem = await cart.create({
       user_id,
@@ -183,11 +178,7 @@ app.post("/cart", async (req, res) => {
 app.get("/viewcart", async (req, res) => {
   try {
     const userId = req.query.userId;
-
-    const cartItems = await cart
-      .find({ user_id: userId })
-      .populate("product_id");
-
+    const cartItems = await cart.find({ user_id: userId }).populate("product_id");
     res.send(cartItems);
   } catch (err) {
     res.status(500).send({ message: err.message });
@@ -198,11 +189,7 @@ app.get("/viewcart", async (req, res) => {
 app.get("/products/:id", async (req, res) => {
   try {
     const findProduct = await product_schema.findById(req.params.id);
-
-    if (!findProduct) {
-      return res.status(404).send({ message: "Product not found" });
-    }
-
+    if (!findProduct) return res.status(404).send({ message: "Product not found" });
     res.send(findProduct);
   } catch (err) {
     res.status(500).send({ message: err.message });
