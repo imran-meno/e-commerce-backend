@@ -24,8 +24,10 @@ app.use(
     credentials: true,
   })
 );
+app.options("*", cors());
 
 app.use(express.json());
+
 
 // ------------------------------
 // MongoDB Atlas connection
@@ -128,25 +130,36 @@ const storage = new CloudinaryStorage({
 const upload = multer({ storage });
 
 // ADD PRODUCT (ADMIN)
-app.post("/admin", upload.single("pro_image"), async (req, res) => {
-  try {
-    const { pro_name, pro_price } = req.body;
-    if (!req.file) return res.status(400).send({ message: "Image required" });
+app.post(
+  "/admin",
+  (req, res, next) => {
+    // Allow preflight OPTIONS
+    if (req.method === "OPTIONS") {
+      return res.sendStatus(200);
+    }
+    next();
+  },
+  upload.single("pro_image"),
+  async (req, res) => {
+    try {
+      const { pro_name, pro_price } = req.body;
+      if (!req.file) return res.status(400).send({ message: "Image required" });
 
-    const imageUrl = req.file.path;
+      const imageUrl = req.file.path;
 
-    const product = await product_schema.create({
-      product_name: pro_name,
-      product_price: pro_price,
-      product_image: imageUrl,
-    });
+      const product = await product_schema.create({
+        product_name: pro_name,
+        product_price: pro_price,
+        product_image: imageUrl,
+      });
 
-    res.status(201).send(product);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send({ message: err.message });
+      res.status(201).send(product);
+    } catch (err) {
+      console.error(err);
+      res.status(500).send({ message: err.message });
+    }
   }
-});
+);
 
 // GET ALL PRODUCTS
 app.get("/products", async (req, res) => {
