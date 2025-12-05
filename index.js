@@ -16,13 +16,14 @@ const app = express();
 // ------------------------------
 // CORS
 // ------------------------------
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL, // Put your frontend URL in Render env
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
-  })
-);
+// app.use(
+//   cors({
+//     origin: "https://e-commerce-frontend-taupe-nine.vercel.app", // Put your frontend URL in Render env
+//     methods: ["GET", "POST", "PUT", "DELETE"],
+//     credentials: true,
+//   })
+// );
+app.use(cors({ origin: "*", credentials: true }));
 
 app.use(express.json());
 
