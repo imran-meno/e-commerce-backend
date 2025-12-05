@@ -21,8 +21,8 @@ const app = express();
 // REAL GLOBAL CORS FIX 🚀
 // ------------------------------
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", process.env.FRONTEND_URL);
-   res.header("Access-Control-Allow-Origin", "https://e-commerce-backend-ero2.onrender.com");
+  res.header("Access-Control-Allow-Origin","*");
+ 
 
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
