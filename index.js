@@ -18,7 +18,7 @@ const app = express();
 // ------------------------------
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "*", // Put your frontend URL in Render env
+    origin: process.env.FRONTEND_URL, // Put your frontend URL in Render env
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
