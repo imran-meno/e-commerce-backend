@@ -15,7 +15,7 @@ const cart = require("./models/cart");
 const app = express();
 
 // ------------------------------
-// CORS
+// CORS (Global Fix)
 // ------------------------------
 app.use(
   cors({
@@ -24,13 +24,21 @@ app.use(
     credentials: true,
   })
 );
+
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", process.env.FRONTEND_URL);
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+  res.header("Access-Control-Allow-Headers", "Content-Type");
+  next();
+});
+
 app.options("*", cors());
 
+// Body Parser
 app.use(express.json());
 
-
 // ------------------------------
-// MongoDB Atlas connection
+// MongoDB Connection
 // ------------------------------
 mongoose
   .connect(process.env.MONGO_URI, {
@@ -117,7 +125,7 @@ app.put("/profile/update", async (req, res) => {
 });
 
 // ------------------------------
-// CLOUDINARY IMAGE UPLOAD
+// CLOUDINARY SETUP
 // ------------------------------
 const storage = new CloudinaryStorage({
   cloudinary,
@@ -129,39 +137,33 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage });
 
+// ------------------------------
 // ADD PRODUCT (ADMIN)
-app.post(
-  "/admin",
-  (req, res, next) => {
-    // Allow preflight OPTIONS
-    if (req.method === "OPTIONS") {
-      return res.sendStatus(200);
-    }
-    next();
-  },
-  upload.single("pro_image"),
-  async (req, res) => {
-    try {
-      const { pro_name, pro_price } = req.body;
-      if (!req.file) return res.status(400).send({ message: "Image required" });
+// ------------------------------
+app.post("/admin", upload.single("pro_image"), async (req, res) => {
+  try {
+    const { pro_name, pro_price } = req.body;
 
-      const imageUrl = req.file.path;
+    if (!req.file) return res.status(400).send({ message: "Image required" });
 
-      const product = await product_schema.create({
-        product_name: pro_name,
-        product_price: pro_price,
-        product_image: imageUrl,
-      });
+    const imageUrl = req.file.path;
 
-      res.status(201).send(product);
-    } catch (err) {
-      console.error(err);
-      res.status(500).send({ message: err.message });
-    }
+    const product = await product_schema.create({
+      product_name: pro_name,
+      product_price: pro_price,
+      product_image: imageUrl,
+    });
+
+    res.status(201).send(product);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: err.message });
   }
-);
+});
 
+// ------------------------------
 // GET ALL PRODUCTS
+// ------------------------------
 app.get("/products", async (req, res) => {
   try {
     const result = await product_schema.find();
@@ -171,7 +173,9 @@ app.get("/products", async (req, res) => {
   }
 });
 
+// ------------------------------
 // GET SINGLE PRODUCT
+// ------------------------------
 app.get("/products/:id", async (req, res) => {
   try {
     const findProduct = await product_schema.findById(req.params.id);
@@ -185,8 +189,6 @@ app.get("/products/:id", async (req, res) => {
 // ------------------------------
 // CART ROUTES
 // ------------------------------
-
-// ADD TO CART
 app.post("/cart", async (req, res) => {
   try {
     const { user_id, product_id } = req.body;
@@ -205,7 +207,6 @@ app.post("/cart", async (req, res) => {
   }
 });
 
-// VIEW CART
 app.get("/viewcart", async (req, res) => {
   try {
     const userId = req.query.userId;
