@@ -32,6 +32,7 @@ app.use(cors(corsOptions));
 // Body Parser
 app.use(express.json());
 
+
 // ------------------------------
 // MongoDB Connection
 // ------------------------------
@@ -49,6 +50,16 @@ mongoose
 app.get("/", (req, res) => {
   res.send("<h1>Backend is working!</h1>");
 });
+function adminAuth(req, res, next) {
+  // You can check from query, headers, or body
+  const key = req.query.adminKey || req.headers['x-admin-key'];
+
+  if (!key || key !== process.env.ADMIN_KEY) {
+    return res.status(403).json({ message: "Forbidden: Admin only" });
+  }
+
+  next(); // key is valid, proceed
+}
 
 // ------------------------------
 // USER ROUTES
@@ -135,7 +146,12 @@ const upload = multer({ storage });
 // ------------------------------
 // ADD PRODUCT (ADMIN)
 // ------------------------------
-app.post("/admin", upload.single("pro_image"), async (req, res) => {
+
+app.get("/admin", adminAuth, (req, res) => {
+  res.send("Welcome to the Admin Panel!");
+});
+
+app.post("/admin", upload.single("pro_image"), adminAuth,async (req, res) => {
   try {
     const { pro_name, pro_price } = req.body;
 
