@@ -20,21 +20,14 @@ const app = express();
 // ------------------------------
 // REAL GLOBAL CORS FIX 🚀
 // ------------------------------
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin","*");
- 
+const corsOptions = {
+  origin: "https://e-commerce-frontend-taupe-nine.vercel.app",
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+};
 
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
-  }
-  next();
-});
-
-
-app.options("*", cors());
+app.use(cors(corsOptions));
 
 // Body Parser
 app.use(express.json());
