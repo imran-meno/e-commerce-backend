@@ -172,6 +172,11 @@ app.post("/admin", upload.single("pro_image"), adminAuth,async (req, res) => {
   }
 });
 
+//awake server
+app.get("/ping", (req, res) => {
+  res.status(200).json({ message: "Backend awake!" });
+});
+
 // ------------------------------
 // GET ALL PRODUCTS
 // ------------------------------
